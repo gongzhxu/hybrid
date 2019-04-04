@@ -43,6 +43,13 @@
 #define EVENT_FLAGS(e) dtoh16((e)->flags)
 #define EVENT_STATUS(e) dtoh32((e)->status)
 
+enum {
+        IEEE80211_BAND_2GHZ    = 0, /* 2.4 GHz */
+        IEEE80211_BAND_3GHZ    = 1, /* 3.6 GHz */
+        IEEE80211_BAND_5GHZ    = 2, /* 4.9 and 5 GHz */
+        IEEE80211_BAND_60GHZ   = 3, /* 60 GHz */
+};
+
 #ifdef BCMDBG
 u32 wl_dbg_level = WL_DBG_ERR | WL_DBG_INFO;
 #else
@@ -50,7 +57,7 @@ u32 wl_dbg_level = WL_DBG_ERR;
 #endif
 
 static s32 wl_cfg80211_change_iface(struct wiphy *wiphy, struct net_device *ndev,
-           enum nl80211_iftype type, u32 *flags, struct vif_params *params);
+           enum nl80211_iftype type, struct vif_params *params);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0)
 static s32
 wl_cfg80211_scan(struct wiphy *wiphy,
@@ -64,7 +71,8 @@ static s32 wl_cfg80211_join_ibss(struct wiphy *wiphy, struct net_device *dev,
            struct cfg80211_ibss_params *params);
 static s32 wl_cfg80211_leave_ibss(struct wiphy *wiphy, struct net_device *dev);
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0)
+//#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0)
+#if 0
 static s32 wl_cfg80211_get_station(struct wiphy *wiphy,
            struct net_device *dev, u8 *mac, struct station_info *sinfo);
 #else
@@ -463,7 +471,7 @@ wl_dev_ioctl(struct net_device *dev, u32 cmd, void *arg, u32 len)
 
 static s32
 wl_cfg80211_change_iface(struct wiphy *wiphy, struct net_device *ndev,
-                         enum nl80211_iftype type, u32 *flags,
+                         enum nl80211_iftype type,
    struct vif_params *params)
 {
 	struct wl_cfg80211_priv *wl = wiphy_to_wl(wiphy);
@@ -1428,7 +1436,8 @@ wl_cfg80211_get_key(struct wiphy *wiphy, struct net_device *dev,
 	return err;
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0)
+//#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0)
+#if 0
 static s32
 wl_cfg80211_get_station(struct wiphy *wiphy, struct net_device *dev,
                         u8 *mac, struct station_info *sinfo)
@@ -1454,7 +1463,8 @@ wl_cfg80211_get_station(struct wiphy *wiphy, struct net_device *dev,
 		WL_DBG(("Could not get rate (%d)\n", err));
 	} else {
 		rate = dtoh32(rate);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 0, 0)
+//#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 0, 0)
+#if 1
 		sinfo->filled |= BIT(NL80211_STA_INFO_TX_BITRATE);
 #else
 		sinfo->filled |= STATION_INFO_TX_BITRATE;
@@ -1471,7 +1481,8 @@ wl_cfg80211_get_station(struct wiphy *wiphy, struct net_device *dev,
 			return err;
 		}
 		rssi = dtoh32(scb_val.val);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 0, 0)
+//#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 0, 0)
+#if 1
 		sinfo->filled |= BIT(NL80211_STA_INFO_SIGNAL);
 #else
 		sinfo->filled |= STATION_INFO_SIGNAL;
@@ -1888,7 +1899,8 @@ static s32 wl_alloc_wdev(struct device *dev, struct wireless_dev **rwdev)
 
 #ifdef CONFIG_PM
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 39)
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+//#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+#if 1
 	wdev->wiphy->wowlan = &wl_wowlan_support;
 #else
 	wdev->wiphy->wowlan = wl_wowlan_support;
@@ -2031,7 +2043,8 @@ static s32 wl_inform_single_bss(struct wl_cfg80211_priv *wl, struct wl_bss_info 
 
 	notify_ie = (u8 *)bi + le16_to_cpu(bi->ie_offset);
 	notify_ielen = le32_to_cpu(bi->ie_length);
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 18, 0)
+//#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 18, 0)
+#if 0
 	cbss = cfg80211_inform_bss(wiphy, channel, (const u8 *)(bi->BSSID.octet),
 		0, beacon_proberesp->capab_info, beacon_proberesp->beacon_int,
 		(const u8 *)notify_ie, notify_ielen, signal, GFP_KERNEL);
@@ -2063,7 +2076,8 @@ wl_notify_connect_status(struct wl_cfg80211_priv *wl, struct net_device *ndev,
 	u32 event = EVENT_TYPE(e);
 	u16 flags = EVENT_FLAGS(e);
 	u32 status = EVENT_STATUS(e);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0)
+//#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0)
+#if 1
 	struct ieee80211_channel *channel = NULL;
 	struct wiphy *wiphy;
 	u32 chanspec, chan;
@@ -2080,7 +2094,8 @@ wl_notify_connect_status(struct wl_cfg80211_priv *wl, struct net_device *ndev,
 		}
 		else if ((event == WLC_E_LINK && ~(flags & WLC_EVENT_MSG_LINK)) ||
 			event == WLC_E_DEAUTH_IND || event == WLC_E_DISASSOC_IND) {
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,2,0)
+//#if LINUX_VERSION_CODE < KERNEL_VERSION(4,2,0)
+#if 0
 			cfg80211_disconnected(ndev, 0, NULL, 0, GFP_KERNEL);
 #else
 			cfg80211_disconnected(ndev, 0, NULL, 0, false, GFP_KERNEL);
@@ -2108,7 +2123,8 @@ wl_notify_connect_status(struct wl_cfg80211_priv *wl, struct net_device *ndev,
 			wl_get_assoc_ies(wl);
 			memcpy(&wl->bssid, &e->addr, ETHER_ADDR_LEN);
 			wl_update_bss_info(wl);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0)
+//#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0)
+#if 1
 			wiphy = wl_to_wiphy(wl);
 			err = wl_dev_intvar_get(ndev, "chanspec", &chanspec);
 			if (err) {
@@ -2359,11 +2375,24 @@ wl_bss_roaming_done(struct wl_cfg80211_priv *wl, struct net_device *ndev,
 {
 	struct wl_cfg80211_connect_info *conn_info = wl_to_conn(wl);
 	s32 err = 0;
+	struct cfg80211_roam_info roam_info;
 
 	wl_get_assoc_ies(wl);
 	memcpy(wl->profile->bssid, &e->addr, ETHER_ADDR_LEN);
 	memcpy(&wl->bssid, &e->addr, ETHER_ADDR_LEN);
 	wl_update_bss_info(wl);
+#if 1
+	roam_info.channel = &wl->conf->channel;
+	roam_info.bss = 0;
+	roam_info.bssid = (u8 *)&wl->bssid;
+	roam_info.req_ie = conn_info->req_ie;
+	roam_info.req_ie_len = conn_info->req_ie_len;
+	roam_info.resp_ie	= conn_info->resp_ie;
+	roam_info.resp_ie_len = conn_info->resp_ie_len;
+	roam_info.authorized = 1;
+
+	cfg80211_roamed(ndev, &roam_info, GFP_KERNEL);
+#else
 	cfg80211_roamed(ndev,
 #if LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 39)
 			&wl->conf->channel,	 
@@ -2371,6 +2400,7 @@ wl_bss_roaming_done(struct wl_cfg80211_priv *wl, struct net_device *ndev,
 			(u8 *)&wl->bssid,
 			conn_info->req_ie, conn_info->req_ie_len,
 			conn_info->resp_ie, conn_info->resp_ie_len, GFP_KERNEL);
+#endif
 	WL_DBG(("Report roaming result\n"));
 
 	set_bit(WL_STATUS_CONNECTED, &wl->status);
@@ -2387,7 +2417,7 @@ wl_bss_connect_done(struct wl_cfg80211_priv *wl, struct net_device *ndev,
 
 	if (wl->scan_request) {
 		WL_DBG(("%s: Aborting scan\n", __FUNCTION__));
-		cfg80211_scan_done(wl->scan_request, true);     
+		cfg80211_scan_done(wl->scan_request, &wl->scan_request->info);     
 		wl->scan_request = NULL;
 	}
 
@@ -2488,7 +2518,7 @@ wl_notify_scan_status(struct wl_cfg80211_priv *wl, struct net_device *ndev,
 
 scan_done_out:
 	if (wl->scan_request) {
-		cfg80211_scan_done(wl->scan_request, false);
+		cfg80211_scan_done(wl->scan_request, &wl->scan_request->info);
 		wl->scan_request = NULL;
 	}
 	rtnl_unlock();
@@ -2913,7 +2943,7 @@ s32 wl_cfg80211_down(struct net_device *ndev)
 	s32 err = 0;
 
 	if (wl->scan_request) {
-		cfg80211_scan_done(wl->scan_request, true);	
+		cfg80211_scan_done(wl->scan_request, &wl->scan_request->info);	
 		wl->scan_request = NULL;
 	}
 
